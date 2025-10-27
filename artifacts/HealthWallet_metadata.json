@@ -1,0 +1,713 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "patient",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "grantedTo",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "expiryTime",
+						"type": "uint256"
+					}
+				],
+				"name": "AccessGranted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "patient",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "revokedFrom",
+						"type": "address"
+					}
+				],
+				"name": "AccessRevoked",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "patient",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "emergencyContact",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "EmergencyAccessUsed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "accessor",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "RecordAccessed",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "patient",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "ipfsHash",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "enum HealthWallet.RecordType",
+						"name": "recordType",
+						"type": "uint8"
+					}
+				],
+				"name": "RecordAdded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "newIpfsHash",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "version",
+						"type": "uint256"
+					}
+				],
+				"name": "RecordUpdated",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_ipfsHash",
+						"type": "string"
+					},
+					{
+						"internalType": "enum HealthWallet.RecordType",
+						"name": "_recordType",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "_encryptedKey",
+						"type": "string"
+					}
+				],
+				"name": "addRecord",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_patientAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "_ipfsHash",
+						"type": "string"
+					},
+					{
+						"internalType": "enum HealthWallet.RecordType",
+						"name": "_recordType",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "_encryptedKey",
+						"type": "string"
+					}
+				],
+				"name": "addRecordByProvider",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_recordId",
+						"type": "uint256"
+					}
+				],
+				"name": "deleteRecord",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "emergencyContact",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_patient",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_grantee",
+						"type": "address"
+					}
+				],
+				"name": "getAccessGrant",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "grantedTo",
+								"type": "address"
+							},
+							{
+								"internalType": "uint256[]",
+								"name": "recordIds",
+								"type": "uint256[]"
+							},
+							{
+								"internalType": "uint256",
+								"name": "expiryTime",
+								"type": "uint256"
+							},
+							{
+								"internalType": "bool",
+								"name": "isActive",
+								"type": "bool"
+							},
+							{
+								"internalType": "uint256",
+								"name": "grantedAt",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct HealthWallet.AccessGrant",
+						"name": "",
+						"type": "tuple"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_recordId",
+						"type": "uint256"
+					}
+				],
+				"name": "getAuditLogs",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "accessor",
+								"type": "address"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "action",
+								"type": "string"
+							}
+						],
+						"internalType": "struct HealthWallet.AccessLog[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_patient",
+						"type": "address"
+					}
+				],
+				"name": "getPatientRecords",
+				"outputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "",
+						"type": "uint256[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_recordId",
+						"type": "uint256"
+					}
+				],
+				"name": "getRecord",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "uint256",
+								"name": "recordId",
+								"type": "uint256"
+							},
+							{
+								"internalType": "address",
+								"name": "patientAddress",
+								"type": "address"
+							},
+							{
+								"internalType": "string",
+								"name": "ipfsHash",
+								"type": "string"
+							},
+							{
+								"internalType": "enum HealthWallet.RecordType",
+								"name": "recordType",
+								"type": "uint8"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							},
+							{
+								"internalType": "address",
+								"name": "issuedBy",
+								"type": "address"
+							},
+							{
+								"internalType": "bool",
+								"name": "isActive",
+								"type": "bool"
+							},
+							{
+								"internalType": "string",
+								"name": "encryptedKey",
+								"type": "string"
+							},
+							{
+								"internalType": "uint256",
+								"name": "version",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct HealthWallet.HealthRecord",
+						"name": "",
+						"type": "tuple"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getTotalRecords",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_grantee",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "_recordIds",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_durationInDays",
+						"type": "uint256"
+					}
+				],
+				"name": "grantAccess",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_patient",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_requester",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_recordId",
+						"type": "uint256"
+					}
+				],
+				"name": "hasAccess",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_recordId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "_action",
+						"type": "string"
+					}
+				],
+				"name": "logAccess",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_grantee",
+						"type": "address"
+					}
+				],
+				"name": "revokeAccess",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_emergencyContact",
+						"type": "address"
+					}
+				],
+				"name": "setEmergencyContact",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_recordId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "_newIpfsHash",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_newEncryptedKey",
+						"type": "string"
+					}
+				],
+				"name": "updateRecord",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"details": "A decentralized health records management system Stores metadata and IPFS pointers on-chain, actual health data on IPFS",
+			"kind": "dev",
+			"methods": {
+				"addRecord(string,uint8,string)": {
+					"details": "Add a new health record",
+					"params": {
+						"_encryptedKey": "Encrypted symmetric key for decryption",
+						"_ipfsHash": "IPFS hash where encrypted health data is stored",
+						"_recordType": "Type of health record"
+					},
+					"returns": {
+						"_0": "recordId The ID of the newly created record"
+					}
+				},
+				"addRecordByProvider(address,string,uint8,string)": {
+					"details": "Add a record issued by a healthcare provider",
+					"params": {
+						"_encryptedKey": "Encrypted key for the patient",
+						"_ipfsHash": "IPFS hash of the encrypted data",
+						"_patientAddress": "Address of the patient",
+						"_recordType": "Type of record"
+					}
+				},
+				"deleteRecord(uint256)": {
+					"details": "Soft delete a record",
+					"params": {
+						"_recordId": "ID of the record to delete"
+					}
+				},
+				"getAccessGrant(address,address)": {
+					"details": "Get access grant details",
+					"params": {
+						"_grantee": "Grantee address",
+						"_patient": "Patient address"
+					},
+					"returns": {
+						"_0": "AccessGrant struct"
+					}
+				},
+				"getAuditLogs(uint256)": {
+					"details": "Get audit logs for a record",
+					"params": {
+						"_recordId": "Record ID"
+					},
+					"returns": {
+						"_0": "Array of AccessLog entries"
+					}
+				},
+				"getPatientRecords(address)": {
+					"details": "Get all record IDs for a patient",
+					"params": {
+						"_patient": "Patient's address"
+					},
+					"returns": {
+						"_0": "Array of record IDs"
+					}
+				},
+				"getRecord(uint256)": {
+					"details": "Get details of a specific record",
+					"params": {
+						"_recordId": "Record ID"
+					},
+					"returns": {
+						"_0": "HealthRecord struct"
+					}
+				},
+				"getTotalRecords()": {
+					"details": "Get total number of records in the system",
+					"returns": {
+						"_0": "Total record count"
+					}
+				},
+				"grantAccess(address,uint256[],uint256)": {
+					"details": "Grant access to specific records for a healthcare provider",
+					"params": {
+						"_durationInDays": "How many days the access should last",
+						"_grantee": "Address to grant access to",
+						"_recordIds": "Array of record IDs to grant access to"
+					}
+				},
+				"hasAccess(address,address,uint256)": {
+					"details": "Check if an address has access to a specific record",
+					"params": {
+						"_patient": "Patient's address",
+						"_recordId": "Record ID to check access for",
+						"_requester": "Address requesting access"
+					},
+					"returns": {
+						"_0": "bool True if access is granted"
+					}
+				},
+				"logAccess(uint256,string)": {
+					"details": "Log access to a record (for audit trail)",
+					"params": {
+						"_action": "Action being performed",
+						"_recordId": "Record being accessed"
+					}
+				},
+				"revokeAccess(address)": {
+					"details": "Revoke access from a healthcare provider",
+					"params": {
+						"_grantee": "Address to revoke access from"
+					}
+				},
+				"setEmergencyContact(address)": {
+					"details": "Set emergency contact who can access all records",
+					"params": {
+						"_emergencyContact": "Address of emergency contact"
+					}
+				},
+				"updateRecord(uint256,string,string)": {
+					"details": "Update an existing record (creates a new version)",
+					"params": {
+						"_newEncryptedKey": "New encrypted key",
+						"_newIpfsHash": "New IPFS hash",
+						"_recordId": "ID of the record to update"
+					}
+				}
+			},
+			"title": "HealthWallet",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/HealthWallet.sol": "HealthWallet"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/HealthWallet.sol": {
+			"keccak256": "0x8bd24ae467b98d98f1737fed198ca013a8c35c09d72d943c03e94da91cf3ff19",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://a1609dea798a9411cf0cb6d18b84a76342b0687de0282c1e43a828b7eec484d2",
+				"dweb:/ipfs/Qmcwg9ZD7noASuXWQW3vcJfjjTvGjrhsJUZrrn7CsdmGmA"
+			]
+		}
+	},
+	"version": 1
+}
