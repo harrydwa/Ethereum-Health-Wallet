@@ -688,7 +688,7 @@
 		"compilationTarget": {
 			"contracts/HealthWallet.sol": "HealthWallet"
 		},
-		"evmVersion": "prague",
+		"evmVersion": "london",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
