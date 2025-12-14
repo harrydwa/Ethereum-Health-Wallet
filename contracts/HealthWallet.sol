@@ -1,50 +1,65 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+
 /**
  * @title HealthWallet
  * @dev A decentralized health records management system
- * Stores metadata and IPFS pointers on-chain, actual health data on IPFS
+ * Uses OpenZeppelin for secure access control
  */
-contract HealthWallet {
+contract HealthWallet is Ownable, AccessControl {
+    
+    // Define role for healthcare providers
+    bytes32 public constant PROVIDER_ROLE = keccak256("PROVIDER_ROLE");
     
     // Enum for different types of health records
     enum RecordType { 
-        LAB_REPORT,      // Blood tests, urine tests, etc.
-        PRESCRIPTION,    // Doctor's prescriptions
-        MEDICAL_IMAGE,   // X-rays, CT scans, MRI
-        DIAGNOSIS,       // Doctor's diagnosis
-        VACCINATION,     // Vaccine records
-        VISIT_SUMMARY    // Hospital visit summaries
+        LAB_REPORT,
+        PRESCRIPTION,
+        MEDICAL_IMAGE,
+        DIAGNOSIS,
+        VACCINATION,
+        VISIT_SUMMARY
     }
     
     // Main health record metadata structure
     struct HealthRecord {
         uint256 recordId;
-        address patientAddress;      // Patient's wallet address
-        string ipfsHash;             // IPFS CID (Content Identifier)
+        address patientAddress;
+        string ipfsHash;
         RecordType recordType;
-        uint256 timestamp;           // When record was created
-        address issuedBy;            // Doctor/Hospital wallet address
-        bool isActive;               // For soft deletes
-        string encryptedKey;         // Encrypted symmetric key for data decryption
-        uint256 version;             // Version number for updates
+        uint256 timestamp;
+        address issuedBy;
+        bool isActive;
+        string encryptedKey;
+        uint256 version;
     }
     
     // Access control structure for sharing records
     struct AccessGrant {
-        address grantedTo;           // Doctor/Hospital granted access
-        uint256[] recordIds;         // Which records they can access
-        uint256 expiryTime;          // Time-based access expiry
-        bool isActive;               // Can be revoked
-        uint256 grantedAt;           // When access was granted
+        address grantedTo;
+        uint256[] recordIds;
+        uint256 expiryTime;
+        bool isActive;
+        uint256 grantedAt;
+    }
+    
+    // Enum for audit log actions
+    enum AuditAction {
+        VIEW,
+        DOWNLOAD,
+        SHARE,
+        UPDATE,
+        DELETE
     }
     
     // Audit log for tracking access
     struct AccessLog {
         address accessor;
         uint256 timestamp;
-        string action;               // "VIEW", "DOWNLOAD", etc.
+        AuditAction action;
     }
     
     // Storage mappings
@@ -57,7 +72,7 @@ contract HealthWallet {
     // Counter for generating unique record IDs
     uint256 private recordCounter;
     
-    // Events for tracking important actions
+    // Events
     event RecordAdded(
         uint256 indexed recordId, 
         address indexed patient, 
@@ -94,7 +109,17 @@ contract HealthWallet {
         uint256 timestamp
     );
     
+    // Constructor - grants DEFAULT_ADMIN_ROLE to deployer
+    constructor() Ownable(msg.sender) {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+    
     // Modifiers for access control
+    modifier onlyAuthorizedProvider() {
+        require(hasRole(PROVIDER_ROLE, msg.sender), "Not an authorized provider");
+        _;
+    }
+    
     modifier onlyPatient(uint256 _recordId) {
         require(
             records[_recordId].patientAddress == msg.sender,
@@ -119,10 +144,6 @@ contract HealthWallet {
     
     /**
      * @dev Add a new health record
-     * @param _ipfsHash IPFS hash where encrypted health data is stored
-     * @param _recordType Type of health record
-     * @param _encryptedKey Encrypted symmetric key for decryption
-     * @return recordId The ID of the newly created record
      */
     function addRecord(
         string memory _ipfsHash,
@@ -153,17 +174,13 @@ contract HealthWallet {
     
     /**
      * @dev Add a record issued by a healthcare provider
-     * @param _patientAddress Address of the patient
-     * @param _ipfsHash IPFS hash of the encrypted data
-     * @param _recordType Type of record
-     * @param _encryptedKey Encrypted key for the patient
      */
     function addRecordByProvider(
         address _patientAddress,
         string memory _ipfsHash,
         RecordType _recordType,
         string memory _encryptedKey
-    ) public returns (uint256) {
+    ) public onlyAuthorizedProvider returns (uint256) {
         require(_patientAddress != address(0), "Invalid patient address");
         require(bytes(_ipfsHash).length > 0, "IPFS hash cannot be empty");
         
@@ -188,16 +205,13 @@ contract HealthWallet {
     }
     
     /**
-     * @dev Update an existing record (creates a new version)
-     * @param _recordId ID of the record to update
-     * @param _newIpfsHash New IPFS hash
-     * @param _newEncryptedKey New encrypted key
+     * @dev Update an existing record
      */
     function updateRecord(
         uint256 _recordId,
         string memory _newIpfsHash,
         string memory _newEncryptedKey
-    ) public onlyPatient(_recordId) recordExists(_recordId) {
+    ) public recordExists(_recordId) onlyPatient(_recordId) {
         HealthRecord storage record = records[_recordId];
         record.ipfsHash = _newIpfsHash;
         record.encryptedKey = _newEncryptedKey;
@@ -208,21 +222,17 @@ contract HealthWallet {
     
     /**
      * @dev Soft delete a record
-     * @param _recordId ID of the record to delete
      */
     function deleteRecord(uint256 _recordId) 
         public 
-        onlyPatient(_recordId) 
         recordExists(_recordId) 
+        onlyPatient(_recordId) 
     {
         records[_recordId].isActive = false;
     }
     
     /**
-     * @dev Grant access to specific records for a healthcare provider
-     * @param _grantee Address to grant access to
-     * @param _recordIds Array of record IDs to grant access to
-     * @param _durationInDays How many days the access should last
+     * @dev Grant access to specific records
      */
     function grantAccess(
         address _grantee,
@@ -231,8 +241,8 @@ contract HealthWallet {
     ) public {
         require(_grantee != address(0), "Invalid address");
         require(_recordIds.length > 0, "Must grant access to at least one record");
+        require(_durationInDays > 0 && _durationInDays <= 3650, "Invalid duration");
         
-        // Verify patient owns all records
         for (uint i = 0; i < _recordIds.length; i++) {
             require(
                 records[_recordIds[i]].patientAddress == msg.sender,
@@ -255,7 +265,6 @@ contract HealthWallet {
     
     /**
      * @dev Revoke access from a healthcare provider
-     * @param _grantee Address to revoke access from
      */
     function revokeAccess(address _grantee) public {
         require(accessGrants[msg.sender][_grantee].isActive, "No active access grant");
@@ -265,28 +274,23 @@ contract HealthWallet {
     
     /**
      * @dev Check if an address has access to a specific record
-     * @param _patient Patient's address
-     * @param _requester Address requesting access
-     * @param _recordId Record ID to check access for
-     * @return bool True if access is granted
      */
     function hasAccess(
         address _patient,
         address _requester,
         uint256 _recordId
     ) public view returns (bool) {
-        // Patient always has access to their own records
         if (_patient == _requester) return true;
         
-        // Check emergency contact access
-        if (emergencyContact[_patient] == _requester) return true;
+        if (emergencyContact[_patient] == _requester) {
+            return true;
+        }
         
         AccessGrant memory grant = accessGrants[_patient][_requester];
         
         if (!grant.isActive) return false;
         if (block.timestamp > grant.expiryTime) return false;
         
-        // Check if recordId is in granted list
         for (uint i = 0; i < grant.recordIds.length; i++) {
             if (grant.recordIds[i] == _recordId) return true;
         }
@@ -296,25 +300,40 @@ contract HealthWallet {
     
     /**
      * @dev Get all record IDs for a patient
-     * @param _patient Patient's address
-     * @return Array of record IDs
      */
     function getPatientRecords(address _patient) 
         public 
         view 
         returns (uint256[] memory) 
     {
-        require(
-            msg.sender == _patient || hasGeneralAccess(_patient, msg.sender),
-            "Not authorized"
-        );
-        return patientRecords[_patient];
+        if (msg.sender == _patient) {
+            return patientRecords[_patient];
+        }
+
+        require(hasGeneralAccess(_patient, msg.sender), "Not authorized");
+
+        uint256[] storage all = patientRecords[_patient];
+        uint256 allowedCount = 0;
+        for (uint256 i = 0; i < all.length; i++) {
+            if (hasAccess(_patient, msg.sender, all[i])) {
+                allowedCount++;
+            }
+        }
+
+        uint256[] memory result = new uint256[](allowedCount);
+        uint256 idx = 0;
+        for (uint256 i = 0; i < all.length; i++) {
+            if (hasAccess(_patient, msg.sender, all[i])) {
+                result[idx] = all[i];
+                idx++;
+            }
+        }
+
+        return result;
     }
     
     /**
      * @dev Get details of a specific record
-     * @param _recordId Record ID
-     * @return HealthRecord struct
      */
     function getRecord(uint256 _recordId) 
         public 
@@ -327,15 +346,21 @@ contract HealthWallet {
     }
     
     /**
-     * @dev Log access to a record (for audit trail)
-     * @param _recordId Record being accessed
-     * @param _action Action being performed
+     * @dev Log access to a record
      */
-    function logAccess(uint256 _recordId, string memory _action) 
+    function logAccess(uint256 _recordId, AuditAction _action) 
         public 
         recordExists(_recordId)
         onlyAuthorized(_recordId)
     {
+        if (emergencyContact[records[_recordId].patientAddress] == msg.sender) {
+            emit EmergencyAccessUsed(
+                records[_recordId].patientAddress,
+                msg.sender,
+                block.timestamp
+            );
+        }
+        
         auditLogs[_recordId].push(AccessLog({
             accessor: msg.sender,
             timestamp: block.timestamp,
@@ -347,12 +372,11 @@ contract HealthWallet {
     
     /**
      * @dev Get audit logs for a record
-     * @param _recordId Record ID
-     * @return Array of AccessLog entries
      */
     function getAuditLogs(uint256 _recordId) 
         public 
         view
+        recordExists(_recordId)
         onlyPatient(_recordId)
         returns (AccessLog[] memory) 
     {
@@ -360,8 +384,7 @@ contract HealthWallet {
     }
     
     /**
-     * @dev Set emergency contact who can access all records
-     * @param _emergencyContact Address of emergency contact
+     * @dev Set emergency contact
      */
     function setEmergencyContact(address _emergencyContact) public {
         require(_emergencyContact != address(0), "Invalid address");
@@ -369,10 +392,7 @@ contract HealthWallet {
     }
     
     /**
-     * @dev Check if requester has general access (for multiple records)
-     * @param _patient Patient address
-     * @param _requester Requester address
-     * @return bool True if has access
+     * @dev Check if requester has general access
      */
     function hasGeneralAccess(address _patient, address _requester) 
         internal 
@@ -387,9 +407,6 @@ contract HealthWallet {
     
     /**
      * @dev Get access grant details
-     * @param _patient Patient address
-     * @param _grantee Grantee address
-     * @return AccessGrant struct
      */
     function getAccessGrant(address _patient, address _grantee) 
         public 
@@ -404,10 +421,36 @@ contract HealthWallet {
     }
     
     /**
-     * @dev Get total number of records in the system
-     * @return Total record count
+     * @dev Get total number of records
      */
     function getTotalRecords() public view returns (uint256) {
         return recordCounter;
+    }
+    
+    // ============================================
+    // OPENZEPPELIN ACCESS CONTROL FUNCTIONS
+    // ============================================
+    
+    /**
+     * @dev Authorize a healthcare provider (only admin)
+     * Uses OpenZeppelin's AccessControl
+     */
+    function authorizeProvider(address _provider) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_provider != address(0), "Invalid provider address");
+        grantRole(PROVIDER_ROLE, _provider);
+    }
+    
+    /**
+     * @dev Revoke provider authorization (only admin)
+     */
+    function revokeProviderAuthorization(address _provider) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        revokeRole(PROVIDER_ROLE, _provider);
+    }
+    
+    /**
+     * @dev Check if an address is an authorized provider
+     */
+    function isAuthorizedProvider(address _provider) public view returns (bool) {
+        return hasRole(PROVIDER_ROLE, _provider);
     }
 }
