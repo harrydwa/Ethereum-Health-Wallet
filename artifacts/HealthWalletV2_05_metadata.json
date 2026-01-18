@@ -341,6 +341,31 @@
 						"type": "address"
 					},
 					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "publicKeyIpfsHash",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "keyVersion",
+						"type": "uint256"
+					}
+				],
+				"name": "PublicKeySet",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
 						"indexed": true,
 						"internalType": "uint256",
 						"name": "reportId",
@@ -906,11 +931,6 @@
 								"type": "string"
 							},
 							{
-								"internalType": "bytes32",
-								"name": "publicKeyHash",
-								"type": "bytes32"
-							},
-							{
 								"internalType": "uint256",
 								"name": "createdAt",
 								"type": "uint256"
@@ -934,6 +954,25 @@
 						"internalType": "struct HealthWalletV2_05.PersonalInfoRef",
 						"name": "",
 						"type": "tuple"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_recipient",
+						"type": "address"
+					}
+				],
+				"name": "getReceivedShareIds",
+				"outputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "",
+						"type": "uint256[]"
 					}
 				],
 				"stateMutability": "view",
@@ -1076,6 +1115,11 @@
 							},
 							{
 								"internalType": "address",
+								"name": "ownerAddress",
+								"type": "address"
+							},
+							{
+								"internalType": "address",
 								"name": "recipientAddress",
 								"type": "address"
 							},
@@ -1095,9 +1139,14 @@
 								"type": "uint8"
 							},
 							{
-								"internalType": "enum HealthWalletV2_05.DataCategory",
-								"name": "sharedDataCategory",
+								"internalType": "enum HealthWalletV2_05.RecordType",
+								"name": "recordType",
 								"type": "uint8"
+							},
+							{
+								"internalType": "uint256",
+								"name": "recordId",
+								"type": "uint256"
 							},
 							{
 								"internalType": "uint256",
@@ -1121,7 +1170,7 @@
 							},
 							{
 								"internalType": "string",
-								"name": "encryptedCategoryKey",
+								"name": "encryptedRecordKey",
 								"type": "string"
 							}
 						],
@@ -1161,6 +1210,25 @@
 						"internalType": "uint256",
 						"name": "totalAccessLogs",
 						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_user",
+						"type": "address"
+					}
+				],
+				"name": "getUserPublicKey",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
 					}
 				],
 				"stateMutability": "view",
@@ -1519,17 +1587,30 @@
 						"type": "string"
 					},
 					{
-						"internalType": "bytes32",
-						"name": "_publicKeyHash",
-						"type": "bytes32"
-					},
-					{
 						"internalType": "string",
 						"name": "_encryptedKey",
 						"type": "string"
 					}
 				],
 				"name": "setPersonalInfo",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_publicKeyIpfsHash",
+						"type": "string"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_publicKeyHash",
+						"type": "bytes32"
+					}
+				],
+				"name": "setUserPublicKey",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1557,9 +1638,14 @@
 						"type": "uint8"
 					},
 					{
-						"internalType": "enum HealthWalletV2_05.DataCategory",
-						"name": "_dataCategory",
+						"internalType": "enum HealthWalletV2_05.RecordType",
+						"name": "_recordType",
 						"type": "uint8"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_recordId",
+						"type": "uint256"
 					},
 					{
 						"internalType": "uint256",
@@ -1573,7 +1659,7 @@
 					},
 					{
 						"internalType": "string",
-						"name": "_encryptedCategoryKey",
+						"name": "_encryptedRecordKey",
 						"type": "string"
 					}
 				],
@@ -1730,6 +1816,40 @@
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "userCryptoProfiles",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "publicKeyHash",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "string",
+						"name": "publicKeyIpfsHash",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "keyVersion",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "isSet",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
 			}
 		],
 		"devdoc": {
@@ -1815,34 +1935,52 @@
 					"details": "Get emergency contact address"
 				},
 				"getMedicationIds(address)": {
-					"details": "Get all medication IDs for a user"
+					"details": "Get all medication IDs for a user For shared access, use getShareRecord() to get specific shared medications"
 				},
 				"getMedicationRef(uint256)": {
 					"details": "Get medication reference (returns IPFS hash only)"
 				},
 				"getPersonalInfoRef(address)": {
-					"details": "Get personal info reference (only returns IPFS hash) Client must decrypt data after fetching from IPFS"
+					"details": "Get personal info reference (only returns IPFS hash) Client must decrypt data after fetching from IPFS For shared access, use getShareRecord() to get the share details"
+				},
+				"getReceivedShareIds(address)": {
+					"details": "Get all share IDs received by a user (shares where they are recipient)",
+					"params": {
+						"_recipient": "Address of the recipient"
+					},
+					"returns": {
+						"_0": "Array of share IDs where user is the recipient"
+					}
 				},
 				"getReportIds(address)": {
-					"details": "Get all report IDs for a user"
+					"details": "Get all report IDs for a user For shared access, use getShareRecord() to get specific shared reports"
 				},
 				"getReportRef(uint256)": {
-					"details": "Get report reference"
+					"details": "Get report reference For shared access, use getShareRecord() to validate share, then call this"
 				},
 				"getRoleAdmin(bytes32)": {
 					"details": "Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}."
 				},
 				"getShareIds(address)": {
-					"details": "Get all share record IDs for a user"
+					"details": "Get all share record IDs for a user (shares they created)"
 				},
 				"getShareRecord(uint256)": {
 					"details": "Get share record"
 				},
+				"getUserPublicKey(address)": {
+					"details": "Get user's public key IPFS hash for sharing",
+					"params": {
+						"_user": "Address of the user"
+					},
+					"returns": {
+						"_0": "publicKeyIpfsHash IPFS hash of user's RSA public key"
+					}
+				},
 				"getVaccinationIds(address)": {
-					"details": "Get all vaccination IDs for a user"
+					"details": "Get all vaccination IDs for a user For shared access, use getShareRecord() to get specific shared vaccinations"
 				},
 				"getVaccinationRef(uint256)": {
-					"details": "Get vaccination reference"
+					"details": "Get vaccination reference For shared access, use getShareRecord() to validate share, then call this"
 				},
 				"grantRole(bytes32,address)": {
 					"details": "Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event."
@@ -1880,24 +2018,32 @@
 				"setEmergencyContact(address)": {
 					"details": "Set emergency contact address Emergency contact details stored in personal info (encrypted)"
 				},
-				"setPersonalInfo(string,bytes32,string)": {
+				"setPersonalInfo(string,string)": {
 					"details": "Store encrypted personal information reference",
 					"params": {
 						"_encryptedDataIpfsHash": "IPFS hash of encrypted personal data JSON",
-						"_publicKeyHash": "Hash of user's public encryption key Client must: 1. Encrypt all personal data with symmetric key 2. Upload encrypted data to IPFS 3. Store only IPFS hash on blockchain"
+						"_encryptedKey": "Encrypted random AES key for this record Client must: 1. Encrypt all personal data with symmetric key 2. Upload encrypted data to IPFS 3. Store only IPFS hash on blockchain Note: Public key managed separately via setUserPublicKey()"
 					}
 				},
-				"shareData(address,bytes32,string,uint8,uint8,uint256,uint8,string)": {
-					"details": "Share data with an entity",
+				"setUserPublicKey(string,bytes32)": {
+					"details": "Set user's RSA public key for sharing functionality",
+					"params": {
+						"_publicKeyHash": "Hash of the public key for verification  Flow: 1. Generate RSA key pair on client 2. Upload public key to IPFS 3. Store IPFS hash on blockchain",
+						"_publicKeyIpfsHash": "IPFS hash where full RSA public key is stored"
+					}
+				},
+				"shareData(address,bytes32,string,uint8,uint8,uint256,uint256,uint8,string)": {
+					"details": "Share a specific record with recipient",
 					"params": {
 						"_accessLevel": "Access level",
-						"_dataCategory": "Category of data to share",
-						"_encryptedCategoryKey": "Category-specific key encrypted with recipient's public key SECURITY: Each data category uses a different encryption key (derived from base key) When sharing VACCINATIONS, only vaccination key is shared - cannot decrypt MEDICATIONS",
 						"_encryptedRecipientDataIpfsHash": "IPFS hash of encrypted recipient details",
+						"_encryptedRecordKey": "Record's AES key encrypted with recipient's RSA public key SECURITY: Shares ONE specific record, not entire category Each record has its own random AES key",
 						"_expiryDate": "Expiry timestamp",
 						"_recipientAddress": "Recipient's blockchain address",
 						"_recipientNameHash": "Hash of recipient name (privacy)",
-						"_recipientType": "Type of recipient"
+						"_recipientType": "Type of recipient",
+						"_recordId": "Specific record ID (use 0 for PersonalInfo since it's unique per user)",
+						"_recordType": "Type of record being shared"
 					}
 				},
 				"supportsInterface(bytes4)": {
@@ -2007,11 +2153,11 @@
 			]
 		},
 		"contracts/HealthWalletV2.05.sol": {
-			"keccak256": "0xea52a54381293f517613f9d1d85938395fd8b060e65abb4f848534e01995fa55",
+			"keccak256": "0xe1b01fa2ecbffc7bd52bacc09fb4ea29f1ebcf513aa5b5d4700c1faee4d8d69e",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://47212e347830aaf11c5a3ffd3e391d8d6bd70c196430607eb6ece312e6066f18",
-				"dweb:/ipfs/QmcvWVy9doA7Mc1YnnA2k8wHpGD2RYvoGgsse5TdB9W1q4"
+				"bzz-raw://8000de0849047da2577d0f6dd72e7607d0054e4273eb8d573749bc91c426335a",
+				"dweb:/ipfs/QmdSWgr1VrZySXr3wJyqXtycj2ZHmLdmvspLixcxhiWE91"
 			]
 		}
 	},

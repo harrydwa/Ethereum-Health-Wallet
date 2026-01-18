@@ -89,12 +89,23 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     // ============================================
 
     /**
+     * @dev User Crypto Profile - Manages RSA public key for sharing
+     * Full public key stored on IPFS for gas efficiency
+     */
+    struct UserCryptoProfile {
+        bytes32 publicKeyHash;      // Hash of public key for verification
+        string publicKeyIpfsHash;   // IPFS hash of full RSA public key
+        uint256 keyVersion;         // For key rotation support
+        bool isSet;
+    }
+
+    /**
      * @dev Encrypted Personal Info Reference
      * Actual data (name, email, phone, etc.) encrypted and stored on IPFS
+     * Public key now managed separately in UserCryptoProfile
      */
     struct PersonalInfoRef {
         string encryptedDataIpfsHash;  // IPFS hash of encrypted JSON
-        bytes32 publicKeyHash;         // Hash of user's public key (for verification)
         uint256 createdAt;
         uint256 lastUpdated;
         bool exists;
@@ -142,22 +153,23 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     }
 
     /**
-     * @dev Share Record - Minimal public info
-     * Recipient details encrypted and stored separately
-     * IMPORTANT: Uses per-category keys for cryptographic isolation
+     * @dev Share Record - Per-Record Sharing
+     * Each share references a SPECIFIC record, not entire category
      */
     struct ShareRecord {
         uint256 id;
-        address recipientAddress;          // On-chain identity
-        bytes32 recipientNameHash;         // Hash only (privacy)
+        address ownerAddress;              // Owner of the shared record
+        address recipientAddress;          // Recipient's address
+        bytes32 recipientNameHash;         // Hash of recipient name (privacy)
         string encryptedRecipientDataIpfsHash; // Encrypted recipient details on IPFS
-        RecipientType recipientType;       // Type visible
-        DataCategory sharedDataCategory;
+        RecipientType recipientType;       // Type of recipient
+        RecordType recordType;             // Type of record being shared
+        uint256 recordId;                  // Specific record ID (0 for PersonalInfo)
         uint256 shareDate;
         uint256 expiryDate;
         AccessLevel accessLevel;
         ShareStatus status;
-        string encryptedCategoryKey;       // Category-specific key encrypted with recipient's public key
+        string encryptedRecordKey;         // Record's AES key encrypted with recipient's RSA public key
     }
 
     /**
@@ -186,6 +198,9 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
 
     // User Address => Encrypted Personal Info Reference
     mapping(address => PersonalInfoRef) private personalInfoRefs;
+
+    // User Address => Crypto Profile (RSA public key management)
+    mapping(address => UserCryptoProfile) public userCryptoProfiles;
 
     // User Address => Medication IDs
     mapping(address => uint256[]) private userMedicationIds;
@@ -254,6 +269,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     event EntityRevoked(address indexed entity, bytes32 role);
 
     event EmergencyContactSet(address indexed user, address indexed emergencyContact);
+    event PublicKeySet(address indexed user, string publicKeyIpfsHash, uint256 keyVersion);
 
     // ============================================
     // CONSTRUCTOR
@@ -291,16 +307,6 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         _;
     }
 
-    modifier hasDataAccess(address _user, DataCategory _category) {
-        require(
-            msg.sender == _user ||
-            _hasSharedAccess(_user, msg.sender, _category) ||
-            hasRole(AUDITOR_ROLE, msg.sender),
-            "No access"
-        );
-        _;
-    }
-
     // ============================================
     // PERSONAL INFO FUNCTIONS
     // ============================================
@@ -308,16 +314,16 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     /**
      * @dev Store encrypted personal information reference
      * @param _encryptedDataIpfsHash IPFS hash of encrypted personal data JSON
-     * @param _publicKeyHash Hash of user's public encryption key
+     * @param _encryptedKey Encrypted random AES key for this record
      *
      * Client must:
      * 1. Encrypt all personal data with symmetric key
      * 2. Upload encrypted data to IPFS
      * 3. Store only IPFS hash on blockchain
+     * Note: Public key managed separately via setUserPublicKey()
      */
     function setPersonalInfo(
         string memory _encryptedDataIpfsHash,
-        bytes32 _publicKeyHash,
         string memory _encryptedKey
     ) external whenNotPaused {
         bool isNew = !personalInfoRefs[msg.sender].exists;
@@ -325,7 +331,6 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         if (isNew) {
             personalInfoRefs[msg.sender] = PersonalInfoRef({
                 encryptedDataIpfsHash: _encryptedDataIpfsHash,
-                publicKeyHash: _publicKeyHash,
                 createdAt: block.timestamp,
                 lastUpdated: block.timestamp,
                 exists: true,
@@ -334,7 +339,6 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
             emit PersonalInfoStored(msg.sender, _encryptedDataIpfsHash, block.timestamp);
         } else {
             personalInfoRefs[msg.sender].encryptedDataIpfsHash = _encryptedDataIpfsHash;
-            personalInfoRefs[msg.sender].publicKeyHash = _publicKeyHash;
             personalInfoRefs[msg.sender].lastUpdated = block.timestamp;
             personalInfoRefs[msg.sender].encryptedKey = _encryptedKey;
             emit PersonalInfoUpdated(msg.sender, _encryptedDataIpfsHash, block.timestamp);
@@ -342,15 +346,58 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     }
 
     /**
+     * @dev Set user's RSA public key for sharing functionality
+     * @param _publicKeyIpfsHash IPFS hash where full RSA public key is stored
+     * @param _publicKeyHash Hash of the public key for verification
+     * 
+     * Flow:
+     * 1. Generate RSA key pair on client
+     * 2. Upload public key to IPFS
+     * 3. Store IPFS hash on blockchain
+     */
+    function setUserPublicKey(
+        string memory _publicKeyIpfsHash,
+        bytes32 _publicKeyHash
+    ) external whenNotPaused {
+        require(bytes(_publicKeyIpfsHash).length > 0, "Invalid IPFS hash");
+        require(_publicKeyHash != bytes32(0), "Invalid key hash");
+
+        uint256 newVersion = userCryptoProfiles[msg.sender].keyVersion + 1;
+
+        userCryptoProfiles[msg.sender] = UserCryptoProfile({
+            publicKeyHash: _publicKeyHash,
+            publicKeyIpfsHash: _publicKeyIpfsHash,
+            keyVersion: newVersion,
+            isSet: true
+        });
+
+        emit PublicKeySet(msg.sender, _publicKeyIpfsHash, newVersion);
+    }
+
+    /**
+     * @dev Get user's public key IPFS hash for sharing
+     * @param _user Address of the user
+     * @return publicKeyIpfsHash IPFS hash of user's RSA public key
+     */
+    function getUserPublicKey(address _user) external view returns (string memory) {
+        require(userCryptoProfiles[_user].isSet, "Public key not set");
+        return userCryptoProfiles[_user].publicKeyIpfsHash;
+    }
+
+    /**
      * @dev Get personal info reference (only returns IPFS hash)
      * Client must decrypt data after fetching from IPFS
+     * For shared access, use getShareRecord() to get the share details
      */
     function getPersonalInfoRef(address _user)
         external
         view
-        hasDataAccess(_user, DataCategory.PERSONAL_INFO)
         returns (PersonalInfoRef memory)
     {
+        require(
+            msg.sender == _user || hasRole(AUDITOR_ROLE, msg.sender),
+            "No access"
+        );
         require(personalInfoRefs[_user].exists, "Not found");
         return personalInfoRefs[_user];
     }
@@ -412,13 +459,17 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
 
     /**
      * @dev Get all medication IDs for a user
+     * For shared access, use getShareRecord() to get specific shared medications
      */
     function getMedicationIds(address _user)
         external
         view
-        hasDataAccess(_user, DataCategory.MEDICATION_RECORDS)
         returns (uint256[] memory)
     {
+        require(
+            msg.sender == _user || hasRole(AUDITOR_ROLE, msg.sender),
+            "No access"
+        );
         return userMedicationIds[_user];
     }
 
@@ -432,9 +483,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     {
         address owner = medicationOwner[_medicationId];
         require(
-            msg.sender == owner ||
-            _hasSharedAccess(owner, msg.sender, DataCategory.MEDICATION_RECORDS) ||
-            hasRole(AUDITOR_ROLE, msg.sender),
+            msg.sender == owner || hasRole(AUDITOR_ROLE, msg.sender),
             "No access"
         );
         return medicationRefs[_medicationId];
@@ -489,18 +538,23 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
 
     /**
      * @dev Get all vaccination IDs for a user
+     * For shared access, use getShareRecord() to get specific shared vaccinations
      */
     function getVaccinationIds(address _user)
         external
         view
-        hasDataAccess(_user, DataCategory.VACCINATION_RECORDS)
         returns (uint256[] memory)
     {
+        require(
+            msg.sender == _user || hasRole(AUDITOR_ROLE, msg.sender),
+            "No access"
+        );
         return userVaccinationIds[_user];
     }
 
     /**
      * @dev Get vaccination reference
+     * For shared access, use getShareRecord() to validate share, then call this
      */
     function getVaccinationRef(uint256 _vaccinationId)
         external
@@ -509,9 +563,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     {
         address owner = vaccinationOwner[_vaccinationId];
         require(
-            msg.sender == owner ||
-            _hasSharedAccess(owner, msg.sender, DataCategory.VACCINATION_RECORDS) ||
-            hasRole(AUDITOR_ROLE, msg.sender),
+            msg.sender == owner || hasRole(AUDITOR_ROLE, msg.sender),
             "No access"
         );
         return vaccinationRefs[_vaccinationId];
@@ -578,18 +630,23 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
 
     /**
      * @dev Get all report IDs for a user
+     * For shared access, use getShareRecord() to get specific shared reports
      */
     function getReportIds(address _user)
         external
         view
-        hasDataAccess(_user, DataCategory.MEDICAL_REPORTS)
         returns (uint256[] memory)
     {
+        require(
+            msg.sender == _user || hasRole(AUDITOR_ROLE, msg.sender),
+            "No access"
+        );
         return userReportIds[_user];
     }
 
     /**
      * @dev Get report reference
+     * For shared access, use getShareRecord() to validate share, then call this
      */
     function getReportRef(uint256 _reportId)
         external
@@ -598,9 +655,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     {
         address owner = reportOwner[_reportId];
         require(
-            msg.sender == owner ||
-            _hasSharedAccess(owner, msg.sender, DataCategory.MEDICAL_REPORTS) ||
-            hasRole(AUDITOR_ROLE, msg.sender),
+            msg.sender == owner || hasRole(AUDITOR_ROLE, msg.sender),
             "No access"
         );
         return reportRefs[_reportId];
@@ -611,54 +666,75 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     // ============================================
 
     /**
-     * @dev Share data with an entity
+     * @dev Share a specific record with recipient
      * @param _recipientAddress Recipient's blockchain address
      * @param _recipientNameHash Hash of recipient name (privacy)
      * @param _encryptedRecipientDataIpfsHash IPFS hash of encrypted recipient details
      * @param _recipientType Type of recipient
-     * @param _dataCategory Category of data to share
+     * @param _recordType Type of record being shared
+     * @param _recordId Specific record ID (use 0 for PersonalInfo since it's unique per user)
      * @param _expiryDate Expiry timestamp
      * @param _accessLevel Access level
-     * @param _encryptedCategoryKey Category-specific key encrypted with recipient's public key
+     * @param _encryptedRecordKey Record's AES key encrypted with recipient's RSA public key
      *
-     * SECURITY: Each data category uses a different encryption key (derived from base key)
-     * When sharing VACCINATIONS, only vaccination key is shared - cannot decrypt MEDICATIONS
+     * SECURITY: Shares ONE specific record, not entire category
+     * Each record has its own random AES key
      */
     function shareData(
         address _recipientAddress,
         bytes32 _recipientNameHash,
         string memory _encryptedRecipientDataIpfsHash,
         RecipientType _recipientType,
-        DataCategory _dataCategory,
+        RecordType _recordType,
+        uint256 _recordId,
         uint256 _expiryDate,
         AccessLevel _accessLevel,
-        string memory _encryptedCategoryKey
+        string memory _encryptedRecordKey
     ) external whenNotPaused onlyPersonalInfoOwner returns (uint256) {
         require(_recipientAddress != address(0), "Invalid addr");
         require(_recipientAddress != msg.sender, "No self-share");
         require(_expiryDate > block.timestamp, "Invalid expiry");
+        require(bytes(_encryptedRecordKey).length > 0, "Invalid encrypted key");
+
+        // Validate record ownership based on type
+        if (_recordType == RecordType.PERSONAL_INFO) {
+            require(personalInfoRefs[msg.sender].exists, "No personal info");
+        } else if (_recordType == RecordType.MEDICATION) {
+            require(medicationOwner[_recordId] == msg.sender, "Not record owner");
+        } else if (_recordType == RecordType.VACCINATION) {
+            require(vaccinationOwner[_recordId] == msg.sender, "Not record owner");
+        } else if (_recordType == RecordType.MEDICAL_REPORT) {
+            require(reportOwner[_recordId] == msg.sender, "Not record owner");
+        }
 
         shareCounter++;
         uint256 newId = shareCounter;
 
         shareRecords[newId] = ShareRecord({
             id: newId,
+            ownerAddress: msg.sender,
             recipientAddress: _recipientAddress,
             recipientNameHash: _recipientNameHash,
             encryptedRecipientDataIpfsHash: _encryptedRecipientDataIpfsHash,
             recipientType: _recipientType,
-            sharedDataCategory: _dataCategory,
+            recordType: _recordType,
+            recordId: _recordId,
             shareDate: block.timestamp,
             expiryDate: _expiryDate,
             accessLevel: _accessLevel,
             status: ShareStatus.ACTIVE,
-            encryptedCategoryKey: _encryptedCategoryKey
+            encryptedRecordKey: _encryptedRecordKey
         });
 
         shareOwner[newId] = msg.sender;
         userShareIds[msg.sender].push(newId);
 
-        emit DataShared(msg.sender, _recipientAddress, newId, _dataCategory, _expiryDate);
+        // Determine category for event (for backward compatibility)
+        DataCategory category = _recordType == RecordType.PERSONAL_INFO ? DataCategory.PERSONAL_INFO :
+                               _recordType == RecordType.MEDICATION ? DataCategory.MEDICATION_RECORDS :
+                               _recordType == RecordType.VACCINATION ? DataCategory.VACCINATION_RECORDS :
+                               DataCategory.MEDICAL_REPORTS;
+        emit DataShared(msg.sender, _recipientAddress, newId, category, _expiryDate);
         return newId;
     }
 
@@ -671,11 +747,42 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     }
 
     /**
-     * @dev Get all share record IDs for a user
+     * @dev Get all share record IDs for a user (shares they created)
      */
     function getShareIds(address _user) external view returns (uint256[] memory) {
         require(msg.sender == _user || hasRole(AUDITOR_ROLE, msg.sender), "No auth");
         return userShareIds[_user];
+    }
+
+    /**
+     * @dev Get all share IDs received by a user (shares where they are recipient)
+     * @param _recipient Address of the recipient
+     * @return Array of share IDs where user is the recipient
+     */
+    function getReceivedShareIds(address _recipient) external view returns (uint256[] memory) {
+        require(msg.sender == _recipient || hasRole(AUDITOR_ROLE, msg.sender), "No auth");
+        
+        // Count received shares first
+        uint256 count = 0;
+        for (uint256 i = 1; i <= shareCounter; i++) {
+            if (shareRecords[i].recipientAddress == _recipient && 
+                shareRecords[i].status == ShareStatus.ACTIVE) {
+                count++;
+            }
+        }
+        
+        // Populate array
+        uint256[] memory receivedShares = new uint256[](count);
+        uint256 index = 0;
+        for (uint256 i = 1; i <= shareCounter; i++) {
+            if (shareRecords[i].recipientAddress == _recipient && 
+                shareRecords[i].status == ShareStatus.ACTIVE) {
+                receivedShares[index] = i;
+                index++;
+            }
+        }
+        
+        return receivedShares;
     }
 
     /**
@@ -701,12 +808,13 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     }
 
     /**
-     * @dev Internal function to check shared access
+     * @dev Check if accessor has access to a specific record
      */
-    function _hasSharedAccess(
+    function _hasSharedRecordAccess(
         address _owner,
         address _accessor,
-        DataCategory _category
+        RecordType _recordType,
+        uint256 _recordId
     ) private view returns (bool) {
         uint256[] memory shareIds = userShareIds[_owner];
 
@@ -717,7 +825,8 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
                 share.recipientAddress == _accessor &&
                 share.status == ShareStatus.ACTIVE &&
                 block.timestamp <= share.expiryDate &&
-                (share.sharedDataCategory == _category || share.sharedDataCategory == DataCategory.ALL_DATA)
+                share.recordType == _recordType &&
+                share.recordId == _recordId
             ) {
                 return true;
             }
@@ -743,10 +852,10 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         DataCategory _accessedCategory,
         bytes32 _dataIntegrityHash
     ) external whenNotPaused returns (uint256) {
-        // Verify accessor has permission
+        // Verify accessor has permission (owner or auditor)
+        // For shared access, recipient should log through their own flow
         require(
             msg.sender == _owner ||
-            _hasSharedAccess(_owner, msg.sender, _accessedCategory) ||
             hasRole(AUDITOR_ROLE, msg.sender),
             "No permission"
         );
