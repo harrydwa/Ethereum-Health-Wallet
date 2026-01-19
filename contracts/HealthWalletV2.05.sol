@@ -387,7 +387,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     /**
      * @dev Get personal info reference (only returns IPFS hash)
      * Client must decrypt data after fetching from IPFS
-     * For shared access, use getShareRecord() to get the share details
+     * Accessible by: owner, auditor, or recipient with active share
      */
     function getPersonalInfoRef(address _user)
         external
@@ -395,7 +395,9 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         returns (PersonalInfoRef memory)
     {
         require(
-            msg.sender == _user || hasRole(AUDITOR_ROLE, msg.sender),
+            msg.sender == _user || 
+            hasRole(AUDITOR_ROLE, msg.sender) ||
+            _hasSharedRecordAccess(_user, msg.sender, RecordType.PERSONAL_INFO, 0),
             "No access"
         );
         require(personalInfoRefs[_user].exists, "Not found");
@@ -475,6 +477,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
 
     /**
      * @dev Get medication reference (returns IPFS hash only)
+     * Accessible by: owner, auditor, or recipient with active share
      */
     function getMedicationRef(uint256 _medicationId)
         external
@@ -483,7 +486,9 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     {
         address owner = medicationOwner[_medicationId];
         require(
-            msg.sender == owner || hasRole(AUDITOR_ROLE, msg.sender),
+            msg.sender == owner || 
+            hasRole(AUDITOR_ROLE, msg.sender) ||
+            _hasSharedRecordAccess(owner, msg.sender, RecordType.MEDICATION, _medicationId),
             "No access"
         );
         return medicationRefs[_medicationId];
@@ -554,7 +559,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
 
     /**
      * @dev Get vaccination reference
-     * For shared access, use getShareRecord() to validate share, then call this
+     * Accessible by: owner, auditor, or recipient with active share
      */
     function getVaccinationRef(uint256 _vaccinationId)
         external
@@ -563,7 +568,9 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     {
         address owner = vaccinationOwner[_vaccinationId];
         require(
-            msg.sender == owner || hasRole(AUDITOR_ROLE, msg.sender),
+            msg.sender == owner || 
+            hasRole(AUDITOR_ROLE, msg.sender) ||
+            _hasSharedRecordAccess(owner, msg.sender, RecordType.VACCINATION, _vaccinationId),
             "No access"
         );
         return vaccinationRefs[_vaccinationId];
@@ -646,7 +653,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
 
     /**
      * @dev Get report reference
-     * For shared access, use getShareRecord() to validate share, then call this
+     * Accessible by: owner, auditor, or recipient with active share
      */
     function getReportRef(uint256 _reportId)
         external
@@ -655,7 +662,9 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     {
         address owner = reportOwner[_reportId];
         require(
-            msg.sender == owner || hasRole(AUDITOR_ROLE, msg.sender),
+            msg.sender == owner || 
+            hasRole(AUDITOR_ROLE, msg.sender) ||
+            _hasSharedRecordAccess(owner, msg.sender, RecordType.MEDICAL_REPORT, _reportId),
             "No access"
         );
         return reportRefs[_reportId];

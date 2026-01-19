@@ -1938,10 +1938,10 @@
 					"details": "Get all medication IDs for a user For shared access, use getShareRecord() to get specific shared medications"
 				},
 				"getMedicationRef(uint256)": {
-					"details": "Get medication reference (returns IPFS hash only)"
+					"details": "Get medication reference (returns IPFS hash only) Accessible by: owner, auditor, or recipient with active share"
 				},
 				"getPersonalInfoRef(address)": {
-					"details": "Get personal info reference (only returns IPFS hash) Client must decrypt data after fetching from IPFS For shared access, use getShareRecord() to get the share details"
+					"details": "Get personal info reference (only returns IPFS hash) Client must decrypt data after fetching from IPFS Accessible by: owner, auditor, or recipient with active share"
 				},
 				"getReceivedShareIds(address)": {
 					"details": "Get all share IDs received by a user (shares where they are recipient)",
@@ -1956,7 +1956,7 @@
 					"details": "Get all report IDs for a user For shared access, use getShareRecord() to get specific shared reports"
 				},
 				"getReportRef(uint256)": {
-					"details": "Get report reference For shared access, use getShareRecord() to validate share, then call this"
+					"details": "Get report reference Accessible by: owner, auditor, or recipient with active share"
 				},
 				"getRoleAdmin(bytes32)": {
 					"details": "Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}."
@@ -1980,7 +1980,7 @@
 					"details": "Get all vaccination IDs for a user For shared access, use getShareRecord() to get specific shared vaccinations"
 				},
 				"getVaccinationRef(uint256)": {
-					"details": "Get vaccination reference For shared access, use getShareRecord() to validate share, then call this"
+					"details": "Get vaccination reference Accessible by: owner, auditor, or recipient with active share"
 				},
 				"grantRole(bytes32,address)": {
 					"details": "Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event."
@@ -2153,11 +2153,11 @@
 			]
 		},
 		"contracts/HealthWalletV2.05.sol": {
-			"keccak256": "0xe1b01fa2ecbffc7bd52bacc09fb4ea29f1ebcf513aa5b5d4700c1faee4d8d69e",
+			"keccak256": "0xc7f35e3a5e85d1229be4af103a0dc4791d87c35cd415db4b2ed7f2cb1086f2fb",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://8000de0849047da2577d0f6dd72e7607d0054e4273eb8d573749bc91c426335a",
-				"dweb:/ipfs/QmdSWgr1VrZySXr3wJyqXtycj2ZHmLdmvspLixcxhiWE91"
+				"bzz-raw://38000640ffa045d1ae83d526e634dec344f0ff84ff3181029be09c76176bf9e2",
+				"dweb:/ipfs/QmSbkh65fjSPjRJsH9Fz8kQeSwDxc4jGD9z2eh2FXzgCmA"
 			]
 		}
 	},
