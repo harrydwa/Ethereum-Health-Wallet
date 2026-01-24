@@ -655,6 +655,11 @@
 						"type": "string"
 					},
 					{
+						"internalType": "string",
+						"name": "_encryptedKey",
+						"type": "string"
+					},
+					{
 						"internalType": "bool",
 						"name": "_isActive",
 						"type": "bool"
@@ -882,6 +887,11 @@
 							{
 								"internalType": "string",
 								"name": "encryptedDataIpfsHash",
+								"type": "string"
+							},
+							{
+								"internalType": "string",
+								"name": "encryptedKey",
 								"type": "string"
 							},
 							{
@@ -1726,6 +1736,11 @@
 						"type": "string"
 					},
 					{
+						"internalType": "string",
+						"name": "_encryptedKey",
+						"type": "string"
+					},
+					{
 						"internalType": "bool",
 						"name": "_isActive",
 						"type": "bool"
@@ -1910,7 +1925,7 @@
 			},
 			"kind": "dev",
 			"methods": {
-				"addMedication(string,bool,uint256,uint256)": {
+				"addMedication(string,string,bool,uint256,uint256)": {
 					"details": "Add encrypted medication record",
 					"params": {
 						"_encryptedDataIpfsHash": "IPFS hash of encrypted medication data",
@@ -2052,7 +2067,7 @@
 				"transferOwnership(address)": {
 					"details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
 				},
-				"updateMedication(uint256,string,bool,uint256,uint256)": {
+				"updateMedication(uint256,string,string,bool,uint256,uint256)": {
 					"details": "Update medication record"
 				},
 				"updateReport(uint256,string,string,uint8,bool,uint256,string)": {
@@ -2153,11 +2168,11 @@
 			]
 		},
 		"contracts/HealthWalletV2.05.sol": {
-			"keccak256": "0xc7f35e3a5e85d1229be4af103a0dc4791d87c35cd415db4b2ed7f2cb1086f2fb",
+			"keccak256": "0x99f00abc547123c1bc1f9ce2436c539095697c2723f585c2729f45919f796c38",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://38000640ffa045d1ae83d526e634dec344f0ff84ff3181029be09c76176bf9e2",
-				"dweb:/ipfs/QmSbkh65fjSPjRJsH9Fz8kQeSwDxc4jGD9z2eh2FXzgCmA"
+				"bzz-raw://6879ccf29e1e700dd44274919df0879dc5aadd0c2d928dc303f7151dd75e5fd9",
+				"dweb:/ipfs/QmSAzQeSpgw9csMfFtM3TY2sUoz7CrqDrXvSYCuETGoeRh"
 			]
 		}
 	},
