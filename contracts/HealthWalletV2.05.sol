@@ -124,6 +124,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         uint256 startDate;             // Date metadata (for chronological ordering)
         uint256 endDate;
         uint256 createdAt;
+        bool isDeleted;                // Soft delete flag
     }
 
     /**
@@ -137,6 +138,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         uint256 vaccinationDate;           // Date metadata only
         uint256 createdAt;
         string encryptedKey;           // NEW: Encrypted random AES key for this record
+        bool isDeleted;                // Soft delete flag
     }
 
     /**
@@ -152,6 +154,7 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         uint256 reportDate;            // Date metadata only
         uint256 createdAt;
         string encryptedKey;           // NEW: Encrypted random AES key for this record
+        bool isDeleted;                // Soft delete flag
     }
 
     /**
@@ -243,12 +246,15 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
 
     event MedicationAdded(address indexed user, uint256 indexed medicationId, string ipfsHash);
     event MedicationUpdated(address indexed user, uint256 indexed medicationId, string ipfsHash);
+    event MedicationDeleted(address indexed user, uint256 indexed medicationId, uint256 timestamp);
 
     event VaccinationAdded(address indexed user, uint256 indexed vaccinationId, string ipfsHash);
     event VaccinationUpdated(address indexed user, uint256 indexed vaccinationId, string ipfsHash);
+    event VaccinationDeleted(address indexed user, uint256 indexed vaccinationId, uint256 timestamp);
 
     event ReportAdded(address indexed user, uint256 indexed reportId, ReportType reportType, string ipfsHash);
     event ReportUpdated(address indexed user, uint256 indexed reportId, string ipfsHash);
+    event ReportDeleted(address indexed user, uint256 indexed reportId, uint256 timestamp);
 
     event DataShared(
         address indexed owner,
@@ -434,7 +440,8 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
             isActive: _isActive,
             startDate: _startDate,
             endDate: _endDate,
-            createdAt: block.timestamp
+            createdAt: block.timestamp,
+            isDeleted: false
         });
 
         medicationOwner[newId] = msg.sender;
@@ -463,6 +470,22 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         med.endDate = _endDate;
 
         emit MedicationUpdated(msg.sender, _medicationId, _encryptedDataIpfsHash);
+    }
+
+    /**
+     * @dev Soft delete medication record
+     * @param _medicationId ID of the medication to delete
+     * @notice This is a soft delete - data remains on blockchain but marked as deleted
+     * @notice Shared records remain accessible to recipients even after deletion
+     */
+    function deleteMedication(uint256 _medicationId) 
+        external 
+        whenNotPaused 
+        onlyMedicationOwner(_medicationId) 
+    {
+        require(!medicationRefs[_medicationId].isDeleted, "Already deleted");
+        medicationRefs[_medicationId].isDeleted = true;
+        emit MedicationDeleted(msg.sender, _medicationId, block.timestamp);
     }
 
     /**
@@ -526,7 +549,8 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
             encryptedCertificateIpfsHash: _encryptedCertificateIpfsHash,
             vaccinationDate: _vaccinationDate,
             createdAt: block.timestamp,
-            encryptedKey: _encryptedKey
+            encryptedKey: _encryptedKey,
+            isDeleted: false
         });
 
         vaccinationOwner[newId] = msg.sender;
@@ -558,6 +582,22 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         vac.encryptedKey = _encryptedKey;
 
         emit VaccinationUpdated(msg.sender, _vaccinationId, _encryptedDataIpfsHash);
+    }
+
+    /**
+     * @dev Soft delete vaccination record
+     * @param _vaccinationId ID of the vaccination to delete
+     * @notice This is a soft delete - data remains on blockchain but marked as deleted
+     * @notice Shared records remain accessible to recipients even after deletion
+     */
+    function deleteVaccination(uint256 _vaccinationId) 
+        external 
+        whenNotPaused 
+        onlyVaccinationOwner(_vaccinationId) 
+    {
+        require(!vaccinationRefs[_vaccinationId].isDeleted, "Already deleted");
+        vaccinationRefs[_vaccinationId].isDeleted = true;
+        emit VaccinationDeleted(msg.sender, _vaccinationId, block.timestamp);
     }
 
     /**
@@ -621,7 +661,8 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
             hasFile: _hasFile,
             reportDate: _reportDate,
             createdAt: block.timestamp,
-            encryptedKey: _encryptedKey
+            encryptedKey: _encryptedKey,
+            isDeleted: false
         });
 
         reportOwner[newId] = msg.sender;
@@ -652,6 +693,22 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         report.encryptedKey = _encryptedKey;
 
         emit ReportUpdated(msg.sender, _reportId, _encryptedDataIpfsHash);
+    }
+
+    /**
+     * @dev Soft delete medical report
+     * @param _reportId ID of the report to delete
+     * @notice This is a soft delete - data remains on blockchain but marked as deleted
+     * @notice Shared records remain accessible to recipients even after deletion
+     */
+    function deleteReport(uint256 _reportId) 
+        external 
+        whenNotPaused 
+        onlyReportOwner(_reportId) 
+    {
+        require(!reportRefs[_reportId].isDeleted, "Already deleted");
+        reportRefs[_reportId].isDeleted = true;
+        emit ReportDeleted(msg.sender, _reportId, block.timestamp);
     }
 
     /**
