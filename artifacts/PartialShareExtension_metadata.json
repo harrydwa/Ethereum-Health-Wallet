@@ -1,0 +1,493 @@
+{
+	"compiler": {
+		"version": "0.8.31+commit.fd3a2265"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "receiver",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "shareIPFSHash",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "merkleRoot",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "expiryTime",
+						"type": "uint256"
+					}
+				],
+				"name": "PartialAccessGranted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "accessIndex",
+						"type": "uint256"
+					}
+				],
+				"name": "PartialAccessRevoked",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "receiver",
+						"type": "address"
+					}
+				],
+				"name": "getActiveSharesForReceiver",
+				"outputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "recordIds",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "owners",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "ipfsHashes",
+						"type": "string[]"
+					},
+					{
+						"internalType": "bytes32[]",
+						"name": "merkleRoots",
+						"type": "bytes32[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "expiryTimes",
+						"type": "uint256[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					}
+				],
+				"name": "getAllPartialAccess",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "sharedWith",
+								"type": "address"
+							},
+							{
+								"internalType": "uint256",
+								"name": "expiryTime",
+								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "shareIPFSHash",
+								"type": "string"
+							},
+							{
+								"internalType": "bytes32",
+								"name": "merkleRoot",
+								"type": "bytes32"
+							},
+							{
+								"internalType": "bool",
+								"name": "isActive",
+								"type": "bool"
+							}
+						],
+						"internalType": "struct PartialShareExtension.PartialAccess[]",
+						"name": "",
+						"type": "tuple[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					}
+				],
+				"name": "getPartialAccess",
+				"outputs": [
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "sharedWith",
+								"type": "address"
+							},
+							{
+								"internalType": "uint256",
+								"name": "expiryTime",
+								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "shareIPFSHash",
+								"type": "string"
+							},
+							{
+								"internalType": "bytes32",
+								"name": "merkleRoot",
+								"type": "bytes32"
+							},
+							{
+								"internalType": "bool",
+								"name": "isActive",
+								"type": "bool"
+							}
+						],
+						"internalType": "struct PartialShareExtension.PartialAccess",
+						"name": "",
+						"type": "tuple"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					}
+				],
+				"name": "getSentPartialShares",
+				"outputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "recordIds",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "receivers",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "ipfsHashes",
+						"type": "string[]"
+					},
+					{
+						"internalType": "bytes32[]",
+						"name": "merkleRoots",
+						"type": "bytes32[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "expiryTimes",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "bool[]",
+						"name": "isActiveArray",
+						"type": "bool[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "receiver",
+						"type": "address"
+					}
+				],
+				"name": "getSharedRecordsForReceiver",
+				"outputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "",
+						"type": "uint256[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "receiver",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "shareIPFSHash",
+						"type": "string"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "merkleRoot",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "uint256",
+						"name": "expiryTime",
+						"type": "uint256"
+					}
+				],
+				"name": "grantPartialAccess",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					}
+				],
+				"name": "hasPartialAccess",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "partialAccessList",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "sharedWith",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "expiryTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "shareIPFSHash",
+						"type": "string"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "merkleRoot",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bool",
+						"name": "isActive",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "recordOwners",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					}
+				],
+				"name": "registerRecord",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "recordId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "accessIndex",
+						"type": "uint256"
+					}
+				],
+				"name": "revokePartialAccess",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"details": "Extension contract for existing HealthWallet - adds Merkle-based partial sharing  USAGE: Deploy this separately, your existing contract stays unchanged Android app maintains both contract addresses",
+			"kind": "dev",
+			"methods": {
+				"getActiveSharesForReceiver(address)": {
+					"details": "Get all active (non-expired, non-revoked) shares for a receiver Returns array of tuples: (recordId, owner, ipfsHash, merkleRoot, expiryTime)"
+				},
+				"getAllPartialAccess(uint256)": {
+					"details": "Get all partial access grants for a record"
+				},
+				"getPartialAccess(uint256,address)": {
+					"details": "Get partial access for a specific user"
+				},
+				"getSentPartialShares(address)": {
+					"details": "Get all partial shares sent by an owner (all records they've shared) Returns details of all shares sent by the owner across all their records"
+				},
+				"getSharedRecordsForReceiver(address)": {
+					"details": "Get all recordIds that have been shared with a receiver Used for discovery - receiver can query what's been shared with them"
+				},
+				"grantPartialAccess(uint256,address,string,bytes32,uint256)": {
+					"details": "Grant partial access with IPFS package"
+				},
+				"hasPartialAccess(uint256,address)": {
+					"details": "Check if user has access"
+				},
+				"registerRecord(uint256,address)": {
+					"details": "Register a record owner (called once per record)"
+				},
+				"revokePartialAccess(uint256,uint256)": {
+					"details": "Revoke partial access"
+				}
+			},
+			"title": "PartialShareExtension",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/PartialShareExtension.sol": "PartialShareExtension"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 1
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/PartialShareExtension.sol": {
+			"keccak256": "0xf0ae46b81ea1e5fb29cb81e743b692d970fa4719c1de3c8d482c412956149bb9",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c90a5cfab2b81618e87ba61c8c7eaf6b7944efe98146288990262e720e531880",
+				"dweb:/ipfs/QmbVvTFeSKbEh87mBfrZfKPE6Sh2qkHPxYknXstAxDvgAN"
+			]
+		}
+	},
+	"version": 1
+}
