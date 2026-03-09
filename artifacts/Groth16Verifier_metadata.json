@@ -1,0 +1,80 @@
+{
+	"compiler": {
+		"version": "0.8.31+commit.fd3a2265"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "uint256[2]",
+						"name": "_pA",
+						"type": "uint256[2]"
+					},
+					{
+						"internalType": "uint256[2][2]",
+						"name": "_pB",
+						"type": "uint256[2][2]"
+					},
+					{
+						"internalType": "uint256[2]",
+						"name": "_pC",
+						"type": "uint256[2]"
+					},
+					{
+						"internalType": "uint256[5]",
+						"name": "_pubSignals",
+						"type": "uint256[5]"
+					}
+				],
+				"name": "verifyProof",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/AgeVerifyExtension.sol": "Groth16Verifier"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 1
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/AgeVerifyExtension.sol": {
+			"keccak256": "0xaf66e6fddb42e2c829179d51bccaefb9c6e92761dbcc0cb70184075e94c2add1",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://67e08864f8223ad9fb4a86b66d091432226bdc76c90a78428f1d246b5a0a78ab",
+				"dweb:/ipfs/QmU7WhbaazoF9kPRZMmGTQiDG4PRN7JagrbdQuUNXQmepD"
+			]
+		}
+	},
+	"version": 1
+}

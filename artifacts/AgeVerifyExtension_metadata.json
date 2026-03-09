@@ -1,0 +1,205 @@
+{
+	"compiler": {
+		"version": "0.8.31+commit.fd3a2265"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "AgeVerified",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					}
+				],
+				"name": "checkAdultStatus",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					}
+				],
+				"name": "getVerificationDetails",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "verified",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "isAdultVerified",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256[2]",
+						"name": "a",
+						"type": "uint256[2]"
+					},
+					{
+						"internalType": "uint256[2][2]",
+						"name": "b",
+						"type": "uint256[2][2]"
+					},
+					{
+						"internalType": "uint256[2]",
+						"name": "c",
+						"type": "uint256[2]"
+					},
+					{
+						"internalType": "uint256[5]",
+						"name": "input",
+						"type": "uint256[5]"
+					}
+				],
+				"name": "submitAgeProof",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "verifiedAt",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "verifier",
+				"outputs": [
+					{
+						"internalType": "contract Groth16Verifier",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {
+				"constructor": {
+					"details": "Deploys and owns its own Groth16Verifier instance."
+				},
+				"submitAgeProof(uint256[2],uint256[2][2],uint256[2],uint256[5])": {
+					"details": "Submit a ZK proof to verify age >= 18.",
+					"params": {
+						"a": "Groth16 proof A  [2]",
+						"b": "Groth16 proof B  [2][2]",
+						"c": "Groth16 proof C  [2]",
+						"input": "Public signals: [isAdult=1, currentYear, currentMonth, currentDay, minAge=18]"
+					}
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/AgeVerifyExtension.sol": "AgeVerifyExtension"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 1
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/AgeVerifyExtension.sol": {
+			"keccak256": "0xaf66e6fddb42e2c829179d51bccaefb9c6e92761dbcc0cb70184075e94c2add1",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://67e08864f8223ad9fb4a86b66d091432226bdc76c90a78428f1d246b5a0a78ab",
+				"dweb:/ipfs/QmU7WhbaazoF9kPRZMmGTQiDG4PRN7JagrbdQuUNXQmepD"
+			]
+		}
+	},
+	"version": 1
+}

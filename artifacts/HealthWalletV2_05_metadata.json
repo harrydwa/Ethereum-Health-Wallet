@@ -241,6 +241,31 @@
 					},
 					{
 						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "MedicationDeleted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "medicationId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
 						"internalType": "string",
 						"name": "ipfsHash",
 						"type": "string"
@@ -404,6 +429,31 @@
 					},
 					{
 						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "ReportDeleted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "reportId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
 						"internalType": "string",
 						"name": "ipfsHash",
 						"type": "string"
@@ -542,6 +592,31 @@
 					}
 				],
 				"name": "VaccinationAdded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint256",
+						"name": "vaccinationId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "VaccinationDeleted",
 				"type": "event"
 			},
 			{
@@ -746,6 +821,11 @@
 						"internalType": "uint256",
 						"name": "_vaccinationDate",
 						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "_encryptedKey",
+						"type": "string"
 					}
 				],
 				"name": "addVaccination",
@@ -756,6 +836,45 @@
 						"type": "uint256"
 					}
 				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_medicationId",
+						"type": "uint256"
+					}
+				],
+				"name": "deleteMedication",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_reportId",
+						"type": "uint256"
+					}
+				],
+				"name": "deleteReport",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_vaccinationId",
+						"type": "uint256"
+					}
+				],
+				"name": "deleteVaccination",
+				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
@@ -913,6 +1032,11 @@
 								"internalType": "uint256",
 								"name": "createdAt",
 								"type": "uint256"
+							},
+							{
+								"internalType": "bool",
+								"name": "isDeleted",
+								"type": "bool"
 							}
 						],
 						"internalType": "struct HealthWalletV2_05.MedicationRecordRef",
@@ -1058,6 +1182,11 @@
 								"internalType": "string",
 								"name": "encryptedKey",
 								"type": "string"
+							},
+							{
+								"internalType": "bool",
+								"name": "isDeleted",
+								"type": "bool"
 							}
 						],
 						"internalType": "struct HealthWalletV2_05.MedicalReportRef",
@@ -1299,6 +1428,16 @@
 								"internalType": "uint256",
 								"name": "createdAt",
 								"type": "uint256"
+							},
+							{
+								"internalType": "string",
+								"name": "encryptedKey",
+								"type": "string"
+							},
+							{
+								"internalType": "bool",
+								"name": "isDeleted",
+								"type": "bool"
 							}
 						],
 						"internalType": "struct HealthWalletV2_05.VaccinationRecordRef",
@@ -1825,6 +1964,11 @@
 						"internalType": "uint256",
 						"name": "_vaccinationDate",
 						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "_encryptedKey",
+						"type": "string"
 					}
 				],
 				"name": "updateVaccination",
@@ -1937,8 +2081,32 @@
 				"addReport(string,string,uint8,bool,uint256,string)": {
 					"details": "Add encrypted medical report"
 				},
-				"addVaccination(string,string,uint256)": {
-					"details": "Add encrypted vaccination record"
+				"addVaccination(string,string,uint256,string)": {
+					"details": "Add encrypted vaccination record",
+					"params": {
+						"_encryptedCertificateIpfsHash": "IPFS hash of encrypted certificate file",
+						"_encryptedDataIpfsHash": "IPFS hash of encrypted vaccination data",
+						"_encryptedKey": "Encrypted random AES key for this record",
+						"_vaccinationDate": "Vaccination date (Unix timestamp)"
+					}
+				},
+				"deleteMedication(uint256)": {
+					"details": "Soft delete medication record",
+					"params": {
+						"_medicationId": "ID of the medication to delete"
+					}
+				},
+				"deleteReport(uint256)": {
+					"details": "Soft delete medical report",
+					"params": {
+						"_reportId": "ID of the report to delete"
+					}
+				},
+				"deleteVaccination(uint256)": {
+					"details": "Soft delete vaccination record",
+					"params": {
+						"_vaccinationId": "ID of the vaccination to delete"
+					}
 				},
 				"getAccessLog(uint256)": {
 					"details": "Get access log (returns IPFS hash only, details must be decrypted)"
@@ -2073,8 +2241,15 @@
 				"updateReport(uint256,string,string,uint8,bool,uint256,string)": {
 					"details": "Update medical report"
 				},
-				"updateVaccination(uint256,string,string,uint256)": {
-					"details": "Update vaccination record"
+				"updateVaccination(uint256,string,string,uint256,string)": {
+					"details": "Update vaccination record",
+					"params": {
+						"_encryptedCertificateIpfsHash": "IPFS hash of encrypted certificate file",
+						"_encryptedDataIpfsHash": "IPFS hash of encrypted vaccination data",
+						"_encryptedKey": "Encrypted random AES key for this record",
+						"_vaccinationDate": "Vaccination date (Unix timestamp)",
+						"_vaccinationId": "ID of the vaccination record to update"
+					}
 				}
 			},
 			"title": "HealthWalletV2.05",
@@ -2082,7 +2257,17 @@
 		},
 		"userdoc": {
 			"kind": "user",
-			"methods": {},
+			"methods": {
+				"deleteMedication(uint256)": {
+					"notice": "This is a soft delete - data remains on blockchain but marked as deletedShared records remain accessible to recipients even after deletion"
+				},
+				"deleteReport(uint256)": {
+					"notice": "This is a soft delete - data remains on blockchain but marked as deletedShared records remain accessible to recipients even after deletion"
+				},
+				"deleteVaccination(uint256)": {
+					"notice": "This is a soft delete - data remains on blockchain but marked as deletedShared records remain accessible to recipients even after deletion"
+				}
+			},
 			"notice": "Only metadata and encrypted IPFS hashes stored on-chain for maximum privacy VERSION 2.05 CHANGES: - Added encryptedKey field to MedicalReportRef for per-record random key encryption - Updated addReport and updateReport functions to accept encryptedKey parameter PRIVACY MODEL: - Sensitive data encrypted client-side using user's key - Encrypted data stored on IPFS - Only IPFS hash (CID) stored on blockchain - Minimal metadata on-chain (timestamps, types, IDs) - Access control via blockchain, data retrieval via IPFS",
 			"version": 1
 		}
@@ -2168,11 +2353,11 @@
 			]
 		},
 		"contracts/HealthWalletV2.05.sol": {
-			"keccak256": "0x99f00abc547123c1bc1f9ce2436c539095697c2723f585c2729f45919f796c38",
+			"keccak256": "0x22366635b08eb4f98bb89fdd8091146aab634a929c51bd8498cce17badc0c897",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://6879ccf29e1e700dd44274919df0879dc5aadd0c2d928dc303f7151dd75e5fd9",
-				"dweb:/ipfs/QmSAzQeSpgw9csMfFtM3TY2sUoz7CrqDrXvSYCuETGoeRh"
+				"bzz-raw://71abf83887bf4e2d6b76e774e0992ee315dc7140ac56eb911c7025ac1944abc5",
+				"dweb:/ipfs/QmVen7asv747Nga6nWaxbDnkhiXqSmx8ouyy8ZdpL48wq6"
 			]
 		}
 	},
