@@ -7,11 +7,11 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
- * @title HealthWalletV2.05
+ * @title HealthWalletV3
  * @dev Privacy-focused health record management - ALL sensitive data encrypted and stored off-chain
  * @notice Only metadata and encrypted IPFS hashes stored on-chain for maximum privacy
  *
- * VERSION 2.05 CHANGES:
+ * VERSION 3 CHANGES:
  * - Added encryptedKey field to MedicalReportRef for per-record random key encryption
  * - Updated addReport and updateReport functions to accept encryptedKey parameter
  *
@@ -22,7 +22,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
  * - Minimal metadata on-chain (timestamps, types, IDs)
  * - Access control via blockchain, data retrieval via IPFS
  */
-contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable {
+contract HealthWalletV3 is Ownable, AccessControl, ReentrancyGuard, Pausable {
 
     // ============================================
     // ROLES
@@ -82,6 +82,25 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         VACCINATION_RECORDS,
         MEDICAL_REPORTS,
         ALL_DATA
+    }
+
+    enum VaccineCode {
+        COVID_19,      // 0
+        MEASLES,       // 1
+        POLIO,         // 2
+        TETANUS,       // 3
+        INFLUENZA,     // 4
+        HPV,           // 5
+        HEPATITIS_B,   // 6
+        HEPATITIS_A,   // 7
+        VARICELLA,     // 8
+        MENINGOCOCCAL, // 9
+        PNEUMOCOCCAL,  // 10
+        TUBERCULOSIS,  // 11
+        ROTAVIRUS,     // 12
+        DIPHTHERIA,    // 13
+        PERTUSSIS,     // 14
+        OTHER          // 15
     }
 
     // ============================================
@@ -190,6 +209,32 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
         bytes32 dataIntegrityHash;         // Hash for integrity verification
     }
 
+    /**
+     * @dev Vaccine Commitment - Track ZK proof commitments for vaccinations
+     * Used for Option A: Local-first vaccine proofs with optional blockchain anchoring
+     */
+    struct VaccineCommitment {
+        uint256 vaccineCode;           // VaccineCode enum value (COVID_19, MEASLES, etc.)
+        uint256 commitment;            // Poseidon hash(vaccinationId, vaccineCode, salt)
+        uint256 registeredAt;          // Timestamp of commitment registration
+        bool isVerified;               // Whether ZK proof has been submitted/verified
+        bytes32 proofHash;             // Hash of submitted ZK proof (if any)
+        uint256 proofSubmittedAt;      // Timestamp of proof submission
+        uint256 expiresAt;             // Optional expiration date (0 = never expires)
+    }
+
+    /**
+     * @dev Age proof anchor (one-step model)
+     */
+    struct AgeProofAnchor {
+        uint256 minAge;
+        uint256 commitment;
+        bool isVerified;
+        bytes32 proofHash;
+        uint256 proofSubmittedAt;
+        uint256 updatedAt;
+    }
+
     // ============================================
     // STATE VARIABLES
     // ============================================
@@ -237,6 +282,18 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
     // Emergency contact addresses (only address visible, details encrypted)
     mapping(address => address) private emergencyContactAddresses;
 
+    // User Address => Vaccine Code => Vaccine Commitment
+    mapping(address => mapping(uint256 => VaccineCommitment)) private vaccineCommitments;
+    
+    // User Address => Array of vaccine codes they've registered commitments for
+    mapping(address => uint256[]) private userVaccineCodes;
+    
+    // Track which vaccines have commitments for a user (for quick lookup)
+    mapping(address => mapping(uint256 => bool)) private userHasVaccine;
+
+    // User Address => Age proof anchor
+    mapping(address => AgeProofAnchor) private ageProofAnchors;
+
     // ============================================
     // EVENTS
     // ============================================
@@ -278,6 +335,28 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
 
     event EmergencyContactSet(address indexed user, address indexed emergencyContact);
     event PublicKeySet(address indexed user, string publicKeyIpfsHash, uint256 keyVersion);
+
+    event VaccineCommitmentRegistered(
+        address indexed user,
+        uint256 indexed vaccineCode,
+        uint256 commitment,
+        uint256 timestamp
+    );
+
+    event VaccineProofSubmitted(
+        address indexed user,
+        uint256 indexed vaccineCode,
+        bytes32 proofHash,
+        uint256 timestamp
+    );
+
+    event AgeProofSubmitted(
+        address indexed user,
+        uint256 minAge,
+        uint256 commitment,
+        bytes32 proofHash,
+        uint256 timestamp
+    );
 
     // ============================================
     // CONSTRUCTOR
@@ -983,6 +1062,274 @@ contract HealthWalletV2_05 is Ownable, AccessControl, ReentrancyGuard, Pausable 
             "No auth"
         );
         return accessLogs[_logId];
+    }
+
+    // ============================================
+    // VACCINE COMMITMENT FUNCTIONS (Option A)
+    // ============================================
+
+    /**
+     * @dev Register a vaccine commitment (Poseidon hash)
+     * Called after user generates ZK proof in VaccineVerifyActivity
+     * @param _vaccineCode Vaccine code (0=COVID_19, 1=MEASLES, etc.)
+     * @param _commitment Poseidon hash(vaccinationId, vaccineCode, salt)
+     * @return true if commitment registered successfully
+     */
+    function registerVaccineCommitment(
+        uint256 _vaccineCode,
+        uint256 _commitment
+    ) external whenNotPaused onlyPersonalInfoOwner returns (bool) {
+        require(_vaccineCode <= 15, "Invalid vaccine code");
+        require(_commitment != 0, "Invalid commitment");
+
+        // Register or update commitment
+        if (!userHasVaccine[msg.sender][_vaccineCode]) {
+            userVaccineCodes[msg.sender].push(_vaccineCode);
+            userHasVaccine[msg.sender][_vaccineCode] = true;
+        }
+
+        vaccineCommitments[msg.sender][_vaccineCode] = VaccineCommitment({
+            vaccineCode: _vaccineCode,
+            commitment: _commitment,
+            registeredAt: block.timestamp,
+            isVerified: false,
+            proofHash: bytes32(0),
+            proofSubmittedAt: 0,
+            expiresAt: 0  // Never expires by default
+        });
+
+        emit VaccineCommitmentRegistered(msg.sender, _vaccineCode, _commitment, block.timestamp);
+        return true;
+    }
+
+    /**
+     * @dev Submit ZK proof for a vaccine (marks commitment as verified)
+     * Called after user submits proof to blockchain
+     * @param _vaccineCode Vaccine code
+     * @param _proofHash Hash of the ZK proof
+     * @return true if proof recorded successfully
+     */
+    function submitVaccineProof(
+        uint256 _vaccineCode,
+        bytes32 _proofHash
+    ) external whenNotPaused returns (bool) {
+        require(_vaccineCode <= 15, "Invalid vaccine code");
+        require(_proofHash != bytes32(0), "Invalid proof hash");
+
+        VaccineCommitment storage commitment = vaccineCommitments[msg.sender][_vaccineCode];
+        require(commitment.commitment != 0, "No commitment for vaccine");
+
+        commitment.isVerified = true;
+        commitment.proofHash = _proofHash;
+        commitment.proofSubmittedAt = block.timestamp;
+
+        emit VaccineProofSubmitted(msg.sender, _vaccineCode, _proofHash, block.timestamp);
+        return true;
+    }
+
+    /**
+     * @dev One-step vaccine anchor model: registers/updates commitment and marks proof verified in one tx.
+     * @param _vaccineCode Vaccine code
+     * @param _commitment Poseidon commitment
+     * @param _proofHash Hash of the ZK proof
+     */
+    function submitVaccineProof(
+        uint256 _vaccineCode,
+        uint256 _commitment,
+        bytes32 _proofHash
+    ) external whenNotPaused onlyPersonalInfoOwner returns (bool) {
+        require(_vaccineCode <= 15, "Invalid vaccine code");
+        require(_commitment != 0, "Invalid commitment");
+        require(_proofHash != bytes32(0), "Invalid proof hash");
+
+        if (!userHasVaccine[msg.sender][_vaccineCode]) {
+            userVaccineCodes[msg.sender].push(_vaccineCode);
+            userHasVaccine[msg.sender][_vaccineCode] = true;
+        }
+
+        VaccineCommitment storage commitmentRef = vaccineCommitments[msg.sender][_vaccineCode];
+
+        if (commitmentRef.registeredAt == 0) {
+            commitmentRef.vaccineCode = _vaccineCode;
+            commitmentRef.registeredAt = block.timestamp;
+            commitmentRef.expiresAt = 0;
+        }
+
+        commitmentRef.commitment = _commitment;
+        commitmentRef.isVerified = true;
+        commitmentRef.proofHash = _proofHash;
+        commitmentRef.proofSubmittedAt = block.timestamp;
+
+        emit VaccineCommitmentRegistered(msg.sender, _vaccineCode, _commitment, block.timestamp);
+        emit VaccineProofSubmitted(msg.sender, _vaccineCode, _proofHash, block.timestamp);
+        return true;
+    }
+
+    /**
+     * @dev One-step age anchor model.
+     * @param _minAge Proved minimum age threshold (e.g., 18)
+     * @param _commitment Commitment/hash related to the locally generated proof
+     * @param _proofHash Hash of ZK proof payload
+     */
+    function submitAgeProof(
+        uint256 _minAge,
+        uint256 _commitment,
+        bytes32 _proofHash
+    ) external whenNotPaused onlyPersonalInfoOwner returns (bool) {
+        require(_minAge >= 18 && _minAge <= 120, "Invalid min age");
+        require(_commitment != 0, "Invalid commitment");
+        require(_proofHash != bytes32(0), "Invalid proof hash");
+
+        ageProofAnchors[msg.sender] = AgeProofAnchor({
+            minAge: _minAge,
+            commitment: _commitment,
+            isVerified: true,
+            proofHash: _proofHash,
+            proofSubmittedAt: block.timestamp,
+            updatedAt: block.timestamp
+        });
+
+        emit AgeProofSubmitted(msg.sender, _minAge, _commitment, _proofHash, block.timestamp);
+        return true;
+    }
+
+    /**
+     * @dev Returns true when user has an anchored age proof with minAge >= 18.
+     */
+    function checkAdultStatus(address _user) external view returns (bool) {
+        AgeProofAnchor memory anchor = ageProofAnchors[_user];
+        return anchor.isVerified && anchor.commitment != 0 && anchor.minAge >= 18;
+    }
+
+    /**
+     * @dev Returns age verification status and latest anchor timestamp.
+     */
+    function getVerificationDetails(address _user) external view returns (bool, uint256) {
+        AgeProofAnchor memory anchor = ageProofAnchors[_user];
+        bool isAdult = anchor.isVerified && anchor.commitment != 0 && anchor.minAge >= 18;
+        return (isAdult, anchor.proofSubmittedAt);
+    }
+
+    /**
+     * @dev Returns the latest anchored age proof hash for a user (bytes32(0) if none).
+     */
+    function getAgeProofHash(address _user) external view returns (bytes32) {
+        return ageProofAnchors[_user].proofHash;
+    }
+
+    /**
+     * @dev Returns latest anchored vaccine proof hash for a user and vaccine code.
+     *      Returns bytes32(0) if no proof was anchored.
+     */
+    function getVaccineProofHash(address _user, uint256 _vaccineCode) external view returns (bytes32) {
+        return vaccineCommitments[_user][_vaccineCode].proofHash;
+    }
+
+    /**
+     * @dev Get vaccine commitment for a user
+     * @param _user Address of the user
+     * @param _vaccineCode Vaccine code
+     * @return VaccineCommitment struct (or empty if not registered)
+     */
+    function getVaccineCommitment(
+        address _user,
+        uint256 _vaccineCode
+    ) external view returns (VaccineCommitment memory) {
+        require(
+            msg.sender == _user ||
+            hasRole(AUDITOR_ROLE, msg.sender),
+            "No access"
+        );
+        return vaccineCommitments[_user][_vaccineCode];
+    }
+
+    /**
+     * @dev Check if a user has a verified vaccination for a specific vaccine
+     * @param _user Address to check
+     * @param _vaccineCode Vaccine code
+     * @return true if user has a verified ZK proof for this vaccine
+     */
+    function checkVaccinationStatus(
+        address _user,
+        uint256 _vaccineCode
+    ) external view returns (bool) {
+        VaccineCommitment memory commitment = vaccineCommitments[_user][_vaccineCode];
+        
+        // Check if commitment exists and is verified
+        if (commitment.commitment == 0) {
+            return false;  // No commitment registered
+        }
+
+        // Check if proof has been submitted
+        if (commitment.isVerified) {
+            // Check expiration if set
+            if (commitment.expiresAt > 0 && block.timestamp > commitment.expiresAt) {
+                return false;  // Proof expired
+            }
+            return true;  // Verified and not expired
+        }
+
+        return false;  // Commitment registered but not verified
+    }
+
+    /**
+     * @dev Get all vaccine codes a user has registered commitments for
+     * @param _user Address of the user
+     * @return Array of vaccine codes
+     */
+    function getUserVaccineCodes(address _user)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        require(
+            msg.sender == _user ||
+            hasRole(AUDITOR_ROLE, msg.sender),
+            "No access"
+        );
+        return userVaccineCodes[_user];
+    }
+
+    /**
+     * @dev Get multiple vaccine commitments at once
+     * @param _user Address of the user
+     * @param _vaccineCodes Array of vaccine codes to check
+     * @return Array of VaccineCommitment structs
+     */
+    function getMultipleVaccineCommitments(
+        address _user,
+        uint256[] memory _vaccineCodes
+    ) external view returns (VaccineCommitment[] memory) {
+        require(
+            msg.sender == _user ||
+            hasRole(AUDITOR_ROLE, msg.sender),
+            "No access"
+        );
+
+        VaccineCommitment[] memory commitments = new VaccineCommitment[](_vaccineCodes.length);
+        for (uint256 i = 0; i < _vaccineCodes.length; i++) {
+            commitments[i] = vaccineCommitments[_user][_vaccineCodes[i]];
+        }
+        return commitments;
+    }
+
+    /**
+     * @dev Revoke a vaccine commitment (user decides to unprove)
+     * @param _vaccineCode Vaccine code to revoke
+     */
+    function revokeVaccineCommitment(uint256 _vaccineCode)
+        external
+        whenNotPaused
+    {
+        require(_vaccineCode <= 15, "Invalid vaccine code");
+        require(
+            userHasVaccine[msg.sender][_vaccineCode],
+            "No commitment to revoke"
+        );
+
+        // Clear the commitment
+        delete vaccineCommitments[msg.sender][_vaccineCode];
+        userHasVaccine[msg.sender][_vaccineCode] = false;
     }
 
     // ============================================

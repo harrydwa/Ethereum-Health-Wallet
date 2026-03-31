@@ -128,7 +128,7 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "enum HealthWalletV2_05.DataCategory",
+						"internalType": "enum HealthWalletV3.DataCategory",
 						"name": "category",
 						"type": "uint8"
 					},
@@ -165,7 +165,7 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "enum HealthWalletV2_05.DataCategory",
+						"internalType": "enum HealthWalletV3.DataCategory",
 						"name": "category",
 						"type": "uint8"
 					},
@@ -435,7 +435,7 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "enum HealthWalletV2_05.ReportType",
+						"internalType": "enum HealthWalletV3.ReportType",
 						"name": "reportType",
 						"type": "uint8"
 					},
@@ -873,7 +873,7 @@
 						"type": "string"
 					},
 					{
-						"internalType": "enum HealthWalletV2_05.ReportType",
+						"internalType": "enum HealthWalletV3.ReportType",
 						"name": "_reportType",
 						"type": "uint8"
 					},
@@ -1048,7 +1048,7 @@
 								"type": "string"
 							},
 							{
-								"internalType": "enum HealthWalletV2_05.DataCategory",
+								"internalType": "enum HealthWalletV3.DataCategory",
 								"name": "accessedCategory",
 								"type": "uint8"
 							},
@@ -1063,7 +1063,7 @@
 								"type": "bytes32"
 							}
 						],
-						"internalType": "struct HealthWalletV2_05.AccessLog",
+						"internalType": "struct HealthWalletV3.AccessLog",
 						"name": "",
 						"type": "tuple"
 					}
@@ -1200,7 +1200,7 @@
 								"type": "bool"
 							}
 						],
-						"internalType": "struct HealthWalletV2_05.MedicationRecordRef",
+						"internalType": "struct HealthWalletV3.MedicationRecordRef",
 						"name": "",
 						"type": "tuple"
 					}
@@ -1261,7 +1261,7 @@
 								"type": "uint256"
 							}
 						],
-						"internalType": "struct HealthWalletV2_05.VaccineCommitment[]",
+						"internalType": "struct HealthWalletV3.VaccineCommitment[]",
 						"name": "",
 						"type": "tuple[]"
 					}
@@ -1307,7 +1307,7 @@
 								"type": "string"
 							}
 						],
-						"internalType": "struct HealthWalletV2_05.PersonalInfoRef",
+						"internalType": "struct HealthWalletV3.PersonalInfoRef",
 						"name": "",
 						"type": "tuple"
 					}
@@ -1381,7 +1381,7 @@
 								"type": "string"
 							},
 							{
-								"internalType": "enum HealthWalletV2_05.ReportType",
+								"internalType": "enum HealthWalletV3.ReportType",
 								"name": "reportType",
 								"type": "uint8"
 							},
@@ -1411,7 +1411,7 @@
 								"type": "bool"
 							}
 						],
-						"internalType": "struct HealthWalletV2_05.MedicalReportRef",
+						"internalType": "struct HealthWalletV3.MedicalReportRef",
 						"name": "",
 						"type": "tuple"
 					}
@@ -1495,12 +1495,12 @@
 								"type": "string"
 							},
 							{
-								"internalType": "enum HealthWalletV2_05.RecipientType",
+								"internalType": "enum HealthWalletV3.RecipientType",
 								"name": "recipientType",
 								"type": "uint8"
 							},
 							{
-								"internalType": "enum HealthWalletV2_05.RecordType",
+								"internalType": "enum HealthWalletV3.RecordType",
 								"name": "recordType",
 								"type": "uint8"
 							},
@@ -1520,12 +1520,12 @@
 								"type": "uint256"
 							},
 							{
-								"internalType": "enum HealthWalletV2_05.AccessLevel",
+								"internalType": "enum HealthWalletV3.AccessLevel",
 								"name": "accessLevel",
 								"type": "uint8"
 							},
 							{
-								"internalType": "enum HealthWalletV2_05.ShareStatus",
+								"internalType": "enum HealthWalletV3.ShareStatus",
 								"name": "status",
 								"type": "uint8"
 							},
@@ -1535,7 +1535,7 @@
 								"type": "string"
 							}
 						],
-						"internalType": "struct HealthWalletV2_05.ShareRecord",
+						"internalType": "struct HealthWalletV3.ShareRecord",
 						"name": "",
 						"type": "tuple"
 					}
@@ -1681,7 +1681,7 @@
 								"type": "bool"
 							}
 						],
-						"internalType": "struct HealthWalletV2_05.VaccinationRecordRef",
+						"internalType": "struct HealthWalletV3.VaccinationRecordRef",
 						"name": "",
 						"type": "tuple"
 					}
@@ -1742,7 +1742,7 @@
 								"type": "uint256"
 							}
 						],
-						"internalType": "struct HealthWalletV2_05.VaccineCommitment",
+						"internalType": "struct HealthWalletV3.VaccineCommitment",
 						"name": "",
 						"type": "tuple"
 					}
@@ -1872,7 +1872,7 @@
 						"type": "string"
 					},
 					{
-						"internalType": "enum HealthWalletV2_05.DataCategory",
+						"internalType": "enum HealthWalletV3.DataCategory",
 						"name": "_accessedCategory",
 						"type": "uint8"
 					},
@@ -2169,12 +2169,12 @@
 						"type": "string"
 					},
 					{
-						"internalType": "enum HealthWalletV2_05.RecipientType",
+						"internalType": "enum HealthWalletV3.RecipientType",
 						"name": "_recipientType",
 						"type": "uint8"
 					},
 					{
-						"internalType": "enum HealthWalletV2_05.RecordType",
+						"internalType": "enum HealthWalletV3.RecordType",
 						"name": "_recordType",
 						"type": "uint8"
 					},
@@ -2189,7 +2189,7 @@
 						"type": "uint256"
 					},
 					{
-						"internalType": "enum HealthWalletV2_05.AccessLevel",
+						"internalType": "enum HealthWalletV3.AccessLevel",
 						"name": "_accessLevel",
 						"type": "uint8"
 					},
@@ -2387,7 +2387,7 @@
 						"type": "string"
 					},
 					{
-						"internalType": "enum HealthWalletV2_05.ReportType",
+						"internalType": "enum HealthWalletV3.ReportType",
 						"name": "_reportType",
 						"type": "uint8"
 					},
@@ -2836,7 +2836,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"contracts/HealthWalletV3.sol": "HealthWalletV2_05"
+			"contracts/HealthWalletV3.sol": "HealthWalletV3"
 		},
 		"evmVersion": "london",
 		"libraries": {},
@@ -2923,11 +2923,11 @@
 			]
 		},
 		"contracts/HealthWalletV3.sol": {
-			"keccak256": "0x104368a3176de20ac13d6c617452044a8da1cec88dbed91678b28a63cfdf8980",
+			"keccak256": "0x925d60a5c749a4c953b7cadb658c5c2558d757d835c2b627587ea0bcc3592c3d",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://e3a03a7132f980f8fafdb5ffe71d5d65dabd0a02e9e2e8b7a1626416431a9efe",
-				"dweb:/ipfs/QmYwgMs2Ef43ZbZR2ANxLtz5zC3AkEDtCaT8Jfh177XmaS"
+				"bzz-raw://020f002f4419040d08f5c71047c98235e25d37410e3fdd74b653c0c599b91db5",
+				"dweb:/ipfs/QmSqpfn4GQmomBfzQt77wuwhEum3AK6M1Q2FBnv85RfySr"
 			]
 		}
 	},
